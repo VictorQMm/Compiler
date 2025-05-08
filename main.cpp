@@ -1,9 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <regex>
-#include <unordered_set>
 #include <vector>
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
@@ -13,14 +13,14 @@ struct Simbolo {
 };
 
 bool ehPalavraReservada(const string& palavra) {
-    static unordered_set<string> palavrasReservadas = {
+    static vector<string> palavrasReservadas = {
         "Program", "read", "write", "integer", "boolean", "double", "function", "procedure", "begin",
         "end", "and", "array", "case", "const", "div", "do",
         "downto", "else", "file", "for", "goto", "if", "in", "label",
-        "mod", "nil", "not", "of", "or" ,"packed", "record", "repeat", "set", 
+        "mod", "nil", "not", "of", "or", "packed", "record", "repeat", "set", 
         "then", "to", "type", "until", "with", "var", "while"
     };
-    return palavrasReservadas.count(palavra) > 0;   
+    return find(palavrasReservadas.begin(), palavrasReservadas.end(), palavra) != palavrasReservadas.end();
 }
 
 string classificarLexema(const string& lexema) {
@@ -33,15 +33,17 @@ string classificarLexema(const string& lexema) {
     if (regex_match(lexema, numeroInteiro)) return "numero_inteiro";
     if (regex_match(lexema, identificador)) return "identificador";
 
-    static unordered_set<string> simbolosCompostos = {
+    static vector<string> simbolosCompostos = {
         ":=", "<=", ">=", "<>", "++", "--"
     };
-    if (simbolosCompostos.count(lexema)) return "simbolo_composto";
+    if (find(simbolosCompostos.begin(), simbolosCompostos.end(), lexema) != simbolosCompostos.end()) 
+        return "simbolo_composto";
 
-    static unordered_set<string> simbolos = {
+    static vector<string> simbolos = {
         "+", "-", "*", "/", "=", "^", "<", ">", ";", ".", ":", ",", "(", ")", "{", "}", "[", "]"
     };
-    if (simbolos.count(lexema)) return "simbolo";
+    if (find(simbolos.begin(), simbolos.end(), lexema) != simbolos.end()) 
+        return "simbolo";
 
     return "desconhecido";
 }
@@ -50,16 +52,15 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
     ifstream arquivoEntrada(caminhoEntrada);
     ofstream arquivoSaida(caminhoSaida);
 
-    // Lê todo o conteúdo do arquivo
+    // Lê todo arquivo
     string conteudoTotal((istreambuf_iterator<char>(arquivoEntrada)), istreambuf_iterator<char>());
 
-    // Remove comentários: {} e (* *)
+    // Remove comentários
     conteudoTotal = regex_replace(conteudoTotal, regex(R"(\{[^}]*\})"), "");
     conteudoTotal = regex_replace(conteudoTotal, regex(R"(\(\*[\s\S]*?\*\))"), "");
 
-    // Regex para separar tokens (prioriza compostos)
+    // Regex para separar tokens 
     regex separador(R"((<=|>=|:=|<>|\+\+|--|[\+\*/=<>;:\.,\(\)\[\]\{\}\\-]|\s+))");
-
 
     sregex_token_iterator iterador(conteudoTotal.begin(), conteudoTotal.end(), separador, {-1, 0});
     sregex_token_iterator fim;
