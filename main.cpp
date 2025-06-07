@@ -4,14 +4,14 @@
 #include <vector>
 #include <iomanip>
 #include <algorithm>
-#include <string> // getline
+#include <string>
 
 using namespace std;
 
 struct Simbolo {
     string lexema;
     string tipo;
-    int linha; 
+    int linha;
 };
 
 bool ehPalavraReservada(const string& palavra) {
@@ -45,7 +45,7 @@ string classificarLexema(const string& lexema) {
     if (find(simbolos.begin(), simbolos.end(), lexema) != simbolos.end())
         return "simbolo";
 
-    return "desconhecido"; 
+    return "desconhecido";
 }
 
 void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
@@ -62,12 +62,14 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
     }
 
     vector<Simbolo> tabelaSimbolos;
+    vector<string> errosLexicos; // Vetor armazena erro
+
     string linha;
     int numeroLinha = 0;
 
-    regex separador(R"((<=|>=|:=|<>|\+\+|--|[\+\*/=<>;:\.,\(\)\[\]\{\}\\-]|\s+))");
+    regex separador(R"((<=|>=|:=|<>|\+\+|--|[a-zA-Z_][a-zA-Z0-9_]*|\d+\.\d+|\d+|[\+\*/=<>;:\.,\(\)\[\]\{\}\^\-]|\s+))");
     regex comentarioChave(R"(\{[^}]*\})");
-    regex comentarioParentesesEstrela(R"(\(\*[\s\S]*?\*\))"); 
+    regex comentarioParentesesEstrela(R"(\(\*[\s\S]*?\*\))");
 
     while (getline(arquivoEntrada, linha)) {
         numeroLinha++;
@@ -81,13 +83,19 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
         for (; iterador != fim; ++iterador) {
             string lexema = iterador->str();
             if (lexema.empty() || regex_match(lexema, regex(R"(^\s+$)"))) {
-                continue; // Pula lexemas em branco
+                continue;
             }
 
             string tipo = classificarLexema(lexema);
 
             if (tipo == "desconhecido") {
-                cerr << "Erro léxico na linha " << numeroLinha << ": Lexema '" << lexema << "' não reconhecido." << endl;
+                string mensagemErro;
+                if (lexema.length() == 1) {
+                    mensagemErro = "Erro léxico na linha " + to_string(numeroLinha) + ": Caractere '" + lexema + "' não reconhecido.";
+                } else {
+                    mensagemErro = "Erro léxico na linha " + to_string(numeroLinha) + ": Sequência '" + lexema + "' não reconhecida.";
+                }
+                errosLexicos.push_back(mensagemErro); // Adiciona a mensagem de erro ao vetor
             } else {
                 tabelaSimbolos.push_back({lexema, tipo, numeroLinha});
             }
@@ -95,13 +103,23 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
     }
 
     arquivoSaida << setw(15) << "Lexema" << setw(20) << "Tipo" << setw(10) << "Linha" << "\n";
-    arquivoSaida << string(45, '-') << "\n"; // ajuste
+    arquivoSaida << string(45, '-') << "\n";
     for (const auto& simbolo : tabelaSimbolos) {
         arquivoSaida << setw(15) << simbolo.lexema << setw(20) << simbolo.tipo << setw(10) << simbolo.linha << "\n";
     }
 
     arquivoEntrada.close();
     arquivoSaida.close();
+
+    cout << "Análise léxica finalizada. Tabela salva em '" << caminhoSaida << "'." << endl;
+
+    if (!errosLexicos.empty()) {
+        cout << "\n--- Erros Encontrados ---\n";
+        for (const string& erro : errosLexicos) {
+            cerr << erro << endl; // cerr para os erros, igual antes
+        }
+        cout << "-------------------------\n";
+    }
 }
 
 int main() {
@@ -109,7 +127,6 @@ int main() {
     string arquivoSaida = "tabela.txt";
 
     analisarLexico(arquivoEntrada, arquivoSaida);
-    cout << "Análise léxica finalizada. Tabela salva em '" << arquivoSaida << "'." << endl;
 
     return 0;
 }

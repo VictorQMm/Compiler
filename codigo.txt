@@ -1,18 +1,13 @@
-Program Exemplo;
-
-var m, y, teste: integer;
-
-function fatorial(n: integer): integer;
+Program TesteErro;
+var
+  num1: integer;
+  num2: real;
 begin
-
-if(n<1) then fatorial := 1
-else fatorial := n * fatorial(n-1)
-
-end;
-
-begin
-
-read(teste);
-write(fatorial(teste))
-
+  read(num1);
+  num2 := num1 + 5.0;
+  write(num2);
+  @simbolo_estranho
+  _identificador_invalido!
+  123.45.67  
+  { 
 end.

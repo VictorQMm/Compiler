@@ -1,63 +1,39 @@
          Lexema                Tipo     Linha
 ---------------------------------------------
         Program   Palavra reservada         1
-        Exemplo       Identificador         1
+      TesteErro       Identificador         1
               ;             simbolo         1
-            var   Palavra reservada         3
-              m       Identificador         3
-              ,             simbolo         3
-              y       Identificador         3
-              ,             simbolo         3
-          teste       Identificador         3
+            var   Palavra reservada         2
+           num1       Identificador         3
               :             simbolo         3
         integer   Palavra reservada         3
               ;             simbolo         3
-       function   Palavra reservada         5
-       fatorial       Identificador         5
-              (             simbolo         5
-              n       Identificador         5
-              :             simbolo         5
-        integer   Palavra reservada         5
-              )             simbolo         5
-              :             simbolo         5
-        integer   Palavra reservada         5
-              ;             simbolo         5
-          begin   Palavra reservada         6
-             if   Palavra reservada         8
+           num2       Identificador         4
+              :             simbolo         4
+           real       Identificador         4
+              ;             simbolo         4
+          begin   Palavra reservada         5
+           read   Palavra reservada         6
+              (             simbolo         6
+           num1       Identificador         6
+              )             simbolo         6
+              ;             simbolo         6
+           num2       Identificador         7
+             :=    simbolo_composto         7
+           num1       Identificador         7
+              +             simbolo         7
+            5.0         Numero real         7
+              ;             simbolo         7
+          write   Palavra reservada         8
               (             simbolo         8
-              n       Identificador         8
-              <             simbolo         8
-              1      Numero inteiro         8
+           num2       Identificador         8
               )             simbolo         8
-           then   Palavra reservada         8
-       fatorial       Identificador         8
-             :=    simbolo_composto         8
-              1      Numero inteiro         8
-           else   Palavra reservada         9
-       fatorial       Identificador         9
-             :=    simbolo_composto         9
-              n       Identificador         9
-              *             simbolo         9
-       fatorial       Identificador         9
-              (             simbolo         9
-              n       Identificador         9
-              -             simbolo         9
-              1      Numero inteiro         9
-              )             simbolo         9
-            end   Palavra reservada        11
-              ;             simbolo        11
-          begin   Palavra reservada        13
-           read   Palavra reservada        15
-              (             simbolo        15
-          teste       Identificador        15
-              )             simbolo        15
-              ;             simbolo        15
-          write   Palavra reservada        16
-              (             simbolo        16
-       fatorial       Identificador        16
-              (             simbolo        16
-          teste       Identificador        16
-              )             simbolo        16
-              )             simbolo        16
-            end   Palavra reservada        18
-              .             simbolo        18
+              ;             simbolo         8
+simbolo_estranho       Identificador         9
+_identificador_invalido       Identificador        10
+         123.45         Numero real        11
+              .             simbolo        11
+             67      Numero inteiro        11
+              {             simbolo        12
+            end   Palavra reservada        13
+              .             simbolo        13
