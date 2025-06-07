@@ -1,63 +1,63 @@
-         Lexema                Tipo
------------------------------------
-        Program   palavra_reservada
-        Exemplo       identificador
-              ;             simbolo
-            var   palavra_reservada
-              m       identificador
-              ,             simbolo
-              y       identificador
-              ,             simbolo
-          teste       identificador
-              :             simbolo
-        integer   palavra_reservada
-              ;             simbolo
-       function   palavra_reservada
-       fatorial       identificador
-              (             simbolo
-              n       identificador
-              :             simbolo
-        integer   palavra_reservada
-              )             simbolo
-              :             simbolo
-        integer   palavra_reservada
-              ;             simbolo
-          begin   palavra_reservada
-             if   palavra_reservada
-              (             simbolo
-              n       identificador
-              <             simbolo
-              1      numero_inteiro
-              )             simbolo
-           then   palavra_reservada
-       fatorial       identificador
-             :=    simbolo_composto
-              1      numero_inteiro
-           else   palavra_reservada
-       fatorial       identificador
-             :=    simbolo_composto
-              n       identificador
-              *             simbolo
-       fatorial       identificador
-              (             simbolo
-              n       identificador
-              -             simbolo
-              1      numero_inteiro
-              )             simbolo
-            end   palavra_reservada
-              ;             simbolo
-          begin   palavra_reservada
-           read   palavra_reservada
-              (             simbolo
-          teste       identificador
-              )             simbolo
-              ;             simbolo
-          write   palavra_reservada
-              (             simbolo
-       fatorial       identificador
-              (             simbolo
-          teste       identificador
-              )             simbolo
-              )             simbolo
-            end   palavra_reservada
-              .             simbolo
+         Lexema                Tipo     Linha
+---------------------------------------------
+        Program   Palavra reservada         1
+        Exemplo       Identificador         1
+              ;             simbolo         1
+            var   Palavra reservada         3
+              m       Identificador         3
+              ,             simbolo         3
+              y       Identificador         3
+              ,             simbolo         3
+          teste       Identificador         3
+              :             simbolo         3
+        integer   Palavra reservada         3
+              ;             simbolo         3
+       function   Palavra reservada         5
+       fatorial       Identificador         5
+              (             simbolo         5
+              n       Identificador         5
+              :             simbolo         5
+        integer   Palavra reservada         5
+              )             simbolo         5
+              :             simbolo         5
+        integer   Palavra reservada         5
+              ;             simbolo         5
+          begin   Palavra reservada         6
+             if   Palavra reservada         8
+              (             simbolo         8
+              n       Identificador         8
+              <             simbolo         8
+              1      Numero inteiro         8
+              )             simbolo         8
+           then   Palavra reservada         8
+       fatorial       Identificador         8
+             :=    simbolo_composto         8
+              1      Numero inteiro         8
+           else   Palavra reservada         9
+       fatorial       Identificador         9
+             :=    simbolo_composto         9
+              n       Identificador         9
+              *             simbolo         9
+       fatorial       Identificador         9
+              (             simbolo         9
+              n       Identificador         9
+              -             simbolo         9
+              1      Numero inteiro         9
+              )             simbolo         9
+            end   Palavra reservada        11
+              ;             simbolo        11
+          begin   Palavra reservada        13
+           read   Palavra reservada        15
+              (             simbolo        15
+          teste       Identificador        15
+              )             simbolo        15
+              ;             simbolo        15
+          write   Palavra reservada        16
+              (             simbolo        16
+       fatorial       Identificador        16
+              (             simbolo        16
+          teste       Identificador        16
+              )             simbolo        16
+              )             simbolo        16
+            end   Palavra reservada        18
+              .             simbolo        18
