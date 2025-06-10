@@ -29,9 +29,5 @@
            num2       Identificador         8
               )             simbolo         8
               ;             simbolo         8
-         123.45         Numero real        10
-              .             simbolo        10
-             67      Numero inteiro        10
-              {             simbolo        11
             end   Palavra reservada        12
               .             simbolo        12

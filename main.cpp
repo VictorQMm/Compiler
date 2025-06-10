@@ -24,14 +24,16 @@ bool ehPalavraReservada(const string& palavra) {
 }
 
 string classificarLexema(const string& lexema) {
-    static regex numReal(R"(^(?:\d+\.\d+)$)");
+    static regex numReal(R"(^\d+\.\d+$)");
     static regex numInt(R"(^\d+$)");
     static regex id(R"(^[a-zA-Z_][a-zA-Z0-9_]*$)");
+    static regex numInvalido(R"(^\d*\.\d*\.\d*.*$)");
 
     if (ehPalavraReservada(lexema)) return "Palavra reservada";
     if (regex_match(lexema, numReal)) return "Numero real";
     if (regex_match(lexema, numInt)) return "Numero inteiro";
     if (regex_match(lexema, id)) return "Identificador";
+    if (regex_match(lexema, numInvalido)) return "numero_invalido";
 
     static vector<string> simbolosCompostos = {
         ":=", "<=", ">=", "<>", "++", "--"
@@ -53,49 +55,57 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
     ofstream arquivoSaida(caminhoSaida);
 
     if (!arquivoEntrada.is_open()) {
-        cerr << "Erro: Não foi possível abrir o arquivo de entrada '" << caminhoEntrada << "'." << endl;
+        cerr << "Erro: Nao foi possivel abrir o arquivo de entrada '" << caminhoEntrada << "'." << endl;
         return;
     }
     if (!arquivoSaida.is_open()) {
-        cerr << "Erro: Não foi possível criar/abrir o arquivo de saída '" << caminhoSaida << "'." << endl;
+        cerr << "Erro: Nao foi possivel criar/abrir o arquivo de saida '" << caminhoSaida << "'." << endl;
         return;
     }
 
     vector<Simbolo> tabelaSimbolos;
-    vector<string> errosLexicos; // Vetor armazena erro
+    vector<string> errosLexicos;
 
     string linha;
     int numeroLinha = 0;
 
-    regex separador(R"((<=|>=|:=|<>|\+\+|--|[a-zA-Z_][a-zA-Z0-9_]*|\d+\.\d+|\d+|[\+\*/=<>;:\.,\(\)\[\]\{\}\^\-]|\s+))");
+    regex separador(R"((<=|>=|:=|<>|\+\+|--|[a-zA-Z_][a-zA-Z0-9_]*|\d*\.\d*\.\d*.*|\d+\.\d+|\d+|[\+\*/=<>;:\.,\(\)\[\]\{\}\^\-]|\s+))");
     regex comentarioChave(R"(\{[^}]*\})");
     regex comentarioParentesesEstrela(R"(\(\*[\s\S]*?\*\))");
+    regex comentarioAberto(R"(\{[^}]*$)");
 
     while (getline(arquivoEntrada, linha)) {
         numeroLinha++;
 
+        if (regex_search(linha, comentarioAberto)) {
+            errosLexicos.push_back("Erro lexico na linha " + to_string(numeroLinha) + ": Comentario aberto '{' nao fechado.");
+            continue; // Pula a token desta linha
+        }
+
         string linhaSemComentarios = regex_replace(linha, comentarioChave, "");
         linhaSemComentarios = regex_replace(linhaSemComentarios, comentarioParentesesEstrela, "");
 
-        sregex_token_iterator iterador(linhaSemComentarios.begin(), linhaSemComentarios.end(), separador, {-1, 0});
+        sregex_token_iterator i(linhaSemComentarios.begin(), linhaSemComentarios.end(), separador, {-1, 0});
         sregex_token_iterator fim;
 
-        for (; iterador != fim; ++iterador) {
-            string lexema = iterador->str();
+        for (; i != fim; ++i) {
+            string lexema = i->str();
             if (lexema.empty() || regex_match(lexema, regex(R"(^\s+$)"))) {
                 continue;
             }
 
             string tipo = classificarLexema(lexema);
 
-            if (tipo == "desconhecido") {
+            if (tipo == "desconhecido" || tipo == "numero_invalido") {
                 string mensagemErro;
-                if (lexema.length() == 1) {
-                    mensagemErro = "Erro léxico na linha " + to_string(numeroLinha) + ": Caractere '" + lexema + "' não reconhecido.";
+                if (tipo == "numero_invalido") {
+                    mensagemErro = "Erro lexico na linha " + to_string(numeroLinha) + ": Numero invalido '" + lexema + "'.";
+                } else if (lexema.length() == 1) {
+                    mensagemErro = "Erro lexico na linha " + to_string(numeroLinha) + ": Caractere '" + lexema + "' nao identificado.";
                 } else {
-                    mensagemErro = "Erro léxico na linha " + to_string(numeroLinha) + ": Sequência '" + lexema + "' não reconhecida.";
+                    mensagemErro = "Erro lexico na linha " + to_string(numeroLinha) + ": Sequencia '" + lexema + "' nao identificada.";
                 }
-                errosLexicos.push_back(mensagemErro); // Adiciona a mensagem de erro ao vetor
+                errosLexicos.push_back(mensagemErro);
             } else {
                 tabelaSimbolos.push_back({lexema, tipo, numeroLinha});
             }
@@ -111,12 +121,12 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
     arquivoEntrada.close();
     arquivoSaida.close();
 
-    cout << "Análise léxica finalizada. Tabela salva em '" << caminhoSaida << "'." << endl;
+    cout << "Analise lexica finalizada. Tabela salva em '" << caminhoSaida << "'." << endl;
 
     if (!errosLexicos.empty()) {
         cout << "\n--- Erros Encontrados ---\n";
         for (const string& erro : errosLexicos) {
-            cerr << erro << endl; // cerr para os erros, igual antes
+            cout << erro << endl;
         }
     }
 }
