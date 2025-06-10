@@ -29,11 +29,9 @@
            num2       Identificador         8
               )             simbolo         8
               ;             simbolo         8
-simbolo_estranho       Identificador         9
-_identificador_invalido       Identificador        10
-         123.45         Numero real        11
-              .             simbolo        11
-             67      Numero inteiro        11
-              {             simbolo        12
-            end   Palavra reservada        13
-              .             simbolo        13
+         123.45         Numero real        10
+              .             simbolo        10
+             67      Numero inteiro        10
+              {             simbolo        11
+            end   Palavra reservada        12
+              .             simbolo        12

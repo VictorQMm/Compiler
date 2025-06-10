@@ -118,7 +118,6 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
         for (const string& erro : errosLexicos) {
             cerr << erro << endl; // cerr para os erros, igual antes
         }
-        cout << "-------------------------\n";
     }
 }
 
