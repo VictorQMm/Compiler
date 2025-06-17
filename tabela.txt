@@ -1,33 +1,34 @@
          Lexema                Tipo     Linha
 ---------------------------------------------
-        Program   Palavra reservada         1
-      TesteErro       Identificador         1
-              ;             simbolo         1
-            var   Palavra reservada         2
-           num1       Identificador         3
-              :             simbolo         3
-        integer   Palavra reservada         3
+        Program   Palavra reservada         3
+      TesteErro       Identificador         3
               ;             simbolo         3
-           num2       Identificador         4
-              :             simbolo         4
-           real       Identificador         4
-              ;             simbolo         4
-          begin   Palavra reservada         5
-           read   Palavra reservada         6
-              (             simbolo         6
-           num1       Identificador         6
-              )             simbolo         6
+            var   Palavra reservada         4
+           num1       Identificador         5
+              :             simbolo         5
+        integer   Palavra reservada         5
+              ;             simbolo         5
+           num2       Identificador         6
+              :             simbolo         6
+           real       Identificador         6
               ;             simbolo         6
-           num2       Identificador         7
-             :=    simbolo_composto         7
-           num1       Identificador         7
-              +             simbolo         7
-            5.0         Numero real         7
-              ;             simbolo         7
-          write   Palavra reservada         8
+          begin   Palavra reservada         7
+           read   Palavra reservada         8
               (             simbolo         8
-           num2       Identificador         8
+           num1       Identificador         8
               )             simbolo         8
               ;             simbolo         8
-            end   Palavra reservada        12
-              .             simbolo        12
+           num2       Identificador         9
+             :=    simbolo_composto         9
+           num1       Identificador         9
+              +             simbolo         9
+            5.0         Numero real         9
+              ;             simbolo         9
+          write   Palavra reservada        10
+              (             simbolo        10
+           num2       Identificador        10
+              )             simbolo        10
+              ;             simbolo        10
+         123.45         Numero real        12
+            end   Palavra reservada        14
+              .             simbolo        14
