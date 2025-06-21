@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <string>
+#include <sstream> // pegar varios tipos em uma unica string
 
 using namespace std;
 
@@ -50,21 +51,21 @@ string classificarLexema(const string& lexema) {
     return "desconhecido";
 }
 
-void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
-    ifstream arquivoEntrada(caminhoEntrada);
-    ofstream arquivoSaida(caminhoSaida);
+vector<Simbolo> tabelaSimbolos;
+vector<string> errosLexicos;
 
+
+pair<vector<Simbolo>, vector<string>> analisarLexico(const string& caminhoEntrada) {
+    ifstream arquivoEntrada(caminhoEntrada); 
+    vector<Simbolo> tabelaSimbolos;          //tokens
+    vector<string> errosLexicos;            
+
+  
     if (!arquivoEntrada.is_open()) {
-        cerr << "Erro: Nao foi possivel abrir o arquivo de entrada '" << caminhoEntrada << "'." << endl;
-        return;
-    }
-    if (!arquivoSaida.is_open()) {
-        cerr << "Erro: Nao foi possivel criar/abrir o arquivo de saida '" << caminhoSaida << "'." << endl;
-        return;
+        errosLexicos.push_back("Erro: Nao foi possivel abrir o arquivo de entrada '" + caminhoEntrada + "'.");
+        return {tabelaSimbolos, errosLexicos};
     }
 
-    vector<Simbolo> tabelaSimbolos;
-    vector<string> errosLexicos;
 
     string linha;
     int numeroLinha = 0;
@@ -112,24 +113,10 @@ void analisarLexico(const string& caminhoEntrada, const string& caminhoSaida) {
         }
     }
 
-    arquivoSaida << setw(15) << "Lexema" << setw(20) << "Tipo" << setw(10) << "Linha" << "\n";
-    arquivoSaida << string(45, '-') << "\n";
-    for (const auto& simbolo : tabelaSimbolos) {
-        arquivoSaida << setw(15) << simbolo.lexema << setw(20) << simbolo.tipo << setw(10) << simbolo.linha << "\n";
-    }
+ arquivoEntrada.close(); 
+return {tabelaSimbolos, errosLexicos};
 
-    arquivoEntrada.close();
-    arquivoSaida.close();
 
-    cout << "Analise lexica finalizada. Tabela salva em '" << caminhoSaida << "'." << endl;
-
-    if (!errosLexicos.empty()) {
-        cout << "\n--- Erros Encontrados ---\n";
-        for (const string& erro : errosLexicos) {
-            cout << erro << endl;
-        }
-    }
-}
 
 int main() {
     string arquivoEntrada = "codigo.txt";
