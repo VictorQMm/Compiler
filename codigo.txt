@@ -1,14 +1,8 @@
-(* Andre *)
-
-Program TesteErro;
-var
-  num1: integer;
-  num2: real;
+Program Exemplo
+var 2x: integer;
+var y integer
 begin
-  read(num1);
-  num2 := num1 + 5.0;
-  write(num2);
-  @
-  123.45
-  { 
-end.
+   x := 10 @ 5;
+   z := ;
+   write(x, y
+end

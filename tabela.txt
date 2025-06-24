@@ -1,34 +1,31 @@
          Lexema                Tipo     Linha
 ---------------------------------------------
-        Program   Palavra reservada         3
-      TesteErro       Identificador         3
-              ;             simbolo         3
-            var   Palavra reservada         4
-           num1       Identificador         5
-              :             simbolo         5
-        integer   Palavra reservada         5
+        Program   Palavra reservada         1
+        Exemplo       Identificador         1
+            var   Palavra reservada         2
+              2      Numero inteiro         2
+              x       Identificador         2
+              :             simbolo         2
+        integer   Palavra reservada         2
+              ;             simbolo         2
+            var   Palavra reservada         3
+              y       Identificador         3
+        integer   Palavra reservada         3
+          begin   Palavra reservada         4
+              x       Identificador         5
+             :=    simbolo_composto         5
+             10      Numero inteiro         5
+              5      Numero inteiro         5
               ;             simbolo         5
-           num2       Identificador         6
-              :             simbolo         6
-           real       Identificador         6
+              z       Identificador         6
+             :=    simbolo_composto         6
               ;             simbolo         6
-          begin   Palavra reservada         7
-           read   Palavra reservada         8
-              (             simbolo         8
-           num1       Identificador         8
-              )             simbolo         8
-              ;             simbolo         8
-           num2       Identificador         9
-             :=    simbolo_composto         9
-           num1       Identificador         9
-              +             simbolo         9
-            5.0         Numero real         9
-              ;             simbolo         9
-          write   Palavra reservada        10
-              (             simbolo        10
-           num2       Identificador        10
-              )             simbolo        10
-              ;             simbolo        10
-         123.45         Numero real        12
-            end   Palavra reservada        14
-              .             simbolo        14
+          write   Palavra reservada         7
+              (             simbolo         7
+              x       Identificador         7
+              ,             simbolo         7
+              y       Identificador         7
+            end   Palavra reservada         8
+
+Erros Sintaticos:
+Erro sintatico linha 2: Esperava lexema ';', achou 'var'

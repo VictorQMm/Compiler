@@ -22,33 +22,26 @@ bool isPalavraReservada(const string& palavra) {
         "label", "mod", "nil", "not", "of", "or", "packed", "record", "repeat", "set", "then", "to", "type",
         "until", "with", "var", "while"
     };
-    for (auto& p : palavras) {
-        if (p == palavra) return true;
-    }
-    return false;
+    return find(palavras.begin(), palavras.end(), palavra) != palavras.end();
 }
 
 string tipoDoLexema(const string& lex) {
     static regex numReal(R"(^\d+\.\d+$)");
     static regex numInt(R"(^\d+$)");
     static regex id(R"(^[a-zA-Z_][a-zA-Z0-9_]*$)");
-    static regex numRuim(R"(^\d*\.\d*\.\d*.*$)");
+    static regex numRuim(R"(^\d+\.\d*\.\d+.*$)"); // detecta números com múltiplos pontos
 
     if (isPalavraReservada(lex)) return "Palavra reservada";
     if (regex_match(lex, numReal)) return "Numero real";
     if (regex_match(lex, numInt)) return "Numero inteiro";
     if (regex_match(lex, id)) return "Identificador";
-    if (regex_match(lex, numRuim)) return "numero_invalido";// detecta números com múltiplos ponto
+    if (regex_match(lex, numRuim)) return "numero_invalido";
 
-    static vector<string> simbolosCompostos = { ":=", "<=", ">=", "<>", "++", "--" };
-    for (auto& sc : simbolosCompostos) {
-        if (sc == lex) return "simbolo_composto";
-    }
+    static vector<string> simbolosCompostos = { ":=", "<=", ">=", "<>", "++", "--", ".." };
+    if (find(simbolosCompostos.begin(), simbolosCompostos.end(), lex) != simbolosCompostos.end()) return "simbolo_composto";
 
     static vector<string> simbolosSimples = { "+", "-", "*", "/", "=", "^", "<", ">", ";", ".", ":", ",", "(", ")", "{", "}", "[", "]" };
-    for (auto& ss : simbolosSimples) {
-        if (ss == lex) return "simbolo";
-    }
+    if (find(simbolosSimples.begin(), simbolosSimples.end(), lex) != simbolosSimples.end()) return "simbolo";
 
     return "desconhecido";
 }
@@ -67,7 +60,7 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) {
     int numLinha = 0;
     bool comentAberto = false;
 
-    regex separador(R"((<=|>=|:=|<>|\+\+|--|[a-zA-Z_][a-zA-Z0-9_]*|\d*\.\d*\.\d*.*|\d+\.\d+|\d+|[\+\*/=<>;:\.,\(\)\[\]\{\}\^\-]|\s+))"); // separa l em lexemas
+    regex separador(R"((<=|>=|:=|<>|\+\+|--|\.\.|[a-zA-Z_][a-zA-Z0-9_]*|\d+\.\d*\.\d+.*|\d+\.\d+|\d+|[\+\*/=<>;:\.,\(\)\[\]\{\}\^\-]))"); // separa l em lexemas
     regex coment1(R"(\{[^}]*\})");
     regex coment2(R"(\(\*[\s\S]*?\*\))");
 
@@ -75,7 +68,7 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) {
         numLinha++;
 
         if (comentAberto) {
-            size_t fimCom = linha.find("*}");
+            size_t fimCom = linha.find("*)");
             if (fimCom != string::npos) { // string::npos = não encontrado
                 comentAberto = false;
                 linha = linha.substr(fimCom + 2); // pula 2 caracteres após o coisa
@@ -106,12 +99,12 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) {
             }
         }
 
-        sregex_token_iterator it(linha.begin(), linha.end(), separador, {-1, 0}); // interlavo de string -> separa tokens
+        sregex_token_iterator it(linha.begin(), linha.end(), separador, 0); // apenas tokens válidos
         sregex_token_iterator end; 
 
         for (/*sregex_token_iterator it*/; it != end; ++it) {
             string lex = it->str();
-            if (lex.empty() || regex_match(lex, regex(R"(^\s+$)"))) continue; //espc branco
+            if (lex.empty()) continue; //espc branco
 
             string t = tipoDoLexema(lex);
 
@@ -148,7 +141,7 @@ class Sintatico {
     bool casa(const string& esperado, bool lexema = true) { //esperado -> lex or tipo
         if (posToken >= (int)tokens.size()) {
             int linhaErro = tokens.empty() ? 0 : tokens.back().linha;
-            erros.push_back("Erro sintatico linha " + to_string(linhaErro) + ": Esperava '" + esperado + "'");
+            erros.push_back("Erro sintatico linha " + to_string(linhaErro) + ": Esperava '" + esperado + "'\n");
             return false;
         }
 
@@ -158,45 +151,54 @@ class Sintatico {
             return true;
         } else { // a != esperado
             string tipoEsperado = lexema ? "lexema" : "tipo";
-            erros.push_back("Erro sintatico linha " + to_string(a.linha) + ": Esperava " + tipoEsperado + " '" + esperado + "', achou '" + a.lexema + "'");
+            erros.push_back("Erro sintatico linha " + to_string(a.linha) + ": Esperava " + tipoEsperado + " '" + esperado + "', achou '" + a.lexema + "'\n");
+            avanca();
             return false;
         }
     }
 
+    void sincroniza(const vector<string>& pontos) {
+        while (posToken < (int)tokens.size()) {
+            if (find(pontos.begin(), pontos.end(), atual().lexema) != pontos.end() || atual().tipo == "EOF") break;
+            avanca();
+        }
+    }
+
     void prog() { // program -> id; -> bloco.
-        if (!casa("Program")) return;
-        if (!casa("Identificador", false)) return;
-        if (!casa(";")) return;
+        if (!casa("Program")) { sincroniza({";", ".", "begin"}); return; }
+        if (!casa("Identificador", false)) { sincroniza({";", ".", "begin"}); return; }
+        if (!casa(";")) { sincroniza({"begin", "."}); return; }
         bloco();
-        if (!casa(".")) return;
+        if (!casa(".")) { sincroniza({}); return; }
 
         if (posToken < (int)tokens.size()) {
             erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Coisa a mais depois do fim do programa");
+            sincroniza({});
         }
     }
 
     void bloco() { // declVar -> begin -> tk_comand -> end
         if (atual().lexema == "var") declVar(); // se prox = var
-        if (!casa("begin")) return;
+        if (!casa("begin")) { sincroniza({"end", "."}); return; }
         listaComandos();
-        if (!casa("end")) return;
+        if (!casa("end")) { sincroniza({"."}); return; }
     }
 
     void declVar() { // declVar -> var -> listaIds: -> tipo;
-        if (!casa("var")) return;
+        if (!casa("var")) { sincroniza({"begin", "end"}); return; }
         while (atual().tipo == "Identificador") {
             listaIds();
-            if (!casa(":")) return;
-            if (!tipo()) return;
-            if (!casa(";")) return;
+            if (!casa(":")) { sincroniza({";", "begin", "end"}); continue; }
+            if (!tipo()) { sincroniza({";", "begin", "end"}); continue; }
+            if (!casa(";")) { sincroniza({"Identificador", "begin", "end"}); continue; }
         }
     }
 
     void listaIds() { // id , id
-        if (!casa("Identificador", false)) return;
+        if (!casa("Identificador", false)) { sincroniza({":", ";", "begin", "end"}); return; }
         while (atual().lexema == ",") {
             avanca();
-            if (!casa("Identificador", false)) return;
+            if (!casa("Identificador", false)) { sincroniza({":", ";", "begin", "end"}); return; }
         }
     }
 
@@ -211,11 +213,14 @@ class Sintatico {
     }
 
     void listaComandos() { // comand ; comand
-        comando();
-        while (atual().lexema == ";") {
-            avanca();
-            if (atual().lexema == "end" || atual().tipo == "EOF") break;
+        while (atual().lexema != "end" && atual().tipo != "EOF") {
             comando();
+            if (atual().lexema == ";") {
+                avanca();
+            } else if (atual().lexema != "end" && atual().tipo != "EOF") {
+                erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Esperava ';', achou '" + atual().lexema + "'\n");
+                sincroniza({";", "end"});
+            }
         }
     }
 
@@ -229,6 +234,7 @@ class Sintatico {
             } else {
                 erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Identificador sem atribuicao");
                 avanca();
+                sincroniza({";", "end"});
             }
         } else if (lex == "read") leitura();
         else if (lex == "write") escrita();
@@ -239,33 +245,34 @@ class Sintatico {
         else {
             erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Comando estranho com '" + lex + "'");
             avanca();
+            sincroniza({";", "end"});
         }
     }
 
     void atribuicao() {
-        if (!casa("Identificador", false)) return;
-        if (!casa(":=")) return;
+        if (!casa("Identificador", false)) { sincroniza({";", "end"}); return; }
+        if (!casa(":=")) { sincroniza({";", "end"}); return; }
         expressao();
     }
 
     void leitura() {
-        if (!casa("read")) return;
-        if (!casa("(")) return;
+        if (!casa("read")) { sincroniza({";", "end"}); return; }
+        if (!casa("(")) { sincroniza({";", "end"}); return; }
         listaIds();
-        if (!casa(")")) return;
+        if (!casa(")")) { sincroniza({";", "end"}); return; }
     }
 
     void escrita() {
-        if (!casa("write")) return;
-        if (!casa("(")) return;
+        if (!casa("write")) { sincroniza({";", "end"}); return; }
+        if (!casa("(")) { sincroniza({";", "end"}); return; }
         listaExp();
-        if (!casa(")")) return;
+        if (!casa(")")) { sincroniza({";", "end"}); return; }
     }
 
     void se() { // if -> expr(then) -> comand(else)
-        if (!casa("if")) return;
+        if (!casa("if")) { sincroniza({";", "end"}); return; }
         expressao();
-        if (!casa("then")) return;
+        if (!casa("then")) { sincroniza({";", "end"}); return; }
         comando();
         if (atual().lexema == "else") {
             avanca();
@@ -274,16 +281,16 @@ class Sintatico {
     }
 
     void enquanto() {
-        if (!casa("while")) return;
+        if (!casa("while")) { sincroniza({";", "end"}); return; }
         expressao();
-        if (!casa("do")) return;
+        if (!casa("do")) { sincroniza({";", "end"}); return; }
         comando();
     }
 
     void blocoInicioFim() {
-        if (!casa("begin")) return;
+        if (!casa("begin")) { sincroniza({"end", ";"}); return; }
         listaComandos();
-        if (!casa("end")) return;
+        if (!casa("end")) { sincroniza({";", "end"}); return; }
     }
 
     void listaExp() {
@@ -331,13 +338,14 @@ class Sintatico {
         } else if (lex == "(") {
             avanca();
             expressao();
-            if (!casa(")")) return;
+            if (!casa(")")) { sincroniza({";", "end"}); return; }
         } else if (lex == "not") {
             avanca();
             fator();
         } else {
             erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Token inesperado '" + lex + "'");
             avanca();
+            sincroniza({";", "end"});
         }
     }
 
@@ -376,20 +384,25 @@ int main() {
     for (auto& simb : tabela) {
         arqSaida << setw(15) << simb.lexema << setw(20) << simb.tipo << setw(10) << simb.linha << "\n";
     }
+    if (!errosLex.empty()) {
+        arqSaida << "\nErros Lexicos:\n";
+        for (auto& e : errosLex) arqSaida << e << "\n";
+    }
     arqSaida.close();
 
-    cout << "Analise lexica terminada. Tabela salva em '" << saida << "'.";
+    cout << "Analise lexica terminada. Tabela salva em '" << saida << "'.\n";
 
     if (!errosLex.empty()) {
-        cout << "\n- Erros Lexicos -\n";
-        for (auto& e : errosLex) cout << e;
+        cout << "- Erros Lexicos -\n";
+        for (auto& e : errosLex) cout << e << "\n";
     }
 
     if (tabela.empty() && !errosLex.empty() && errosLex[0].find("Nao abriu arquivo") != string::npos) {
+        cout << "Por favor, verifique se o arquivo 'codigo.txt' existe no diretorio correto.\n";
         return 1;
     }
 
-    cout << "\n- Analise Sintatica -\n";
+    cout << "- Analise Sintatica -\n";
     Sintatico sint(tabela);
     sint.analisar();
 
@@ -398,6 +411,12 @@ int main() {
     if (!errosSint.empty()) {
         cout << "\n- Erros Sintaticos -\n";
         for (auto& e : errosSint) cout << e;
+        ofstream arqSaidaErro(saida, ios::app);
+        if (arqSaidaErro.is_open()) {
+            arqSaidaErro << "\nErros Sintaticos:\n";
+            for (auto& e : errosSint) arqSaidaErro << e;
+            arqSaidaErro.close();
+        }
     } else {
         cout << "Analise sintatica concluida sem erros.\n";
     }
