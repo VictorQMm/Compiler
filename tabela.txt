@@ -1,31 +1,47 @@
-         Lexema                Tipo     Linha
----------------------------------------------
-        Program   Palavra reservada         1
-        Exemplo       Identificador         1
-            var   Palavra reservada         2
-              2      Numero inteiro         2
-              x       Identificador         2
-              :             simbolo         2
-        integer   Palavra reservada         2
-              ;             simbolo         2
-            var   Palavra reservada         3
-              y       Identificador         3
-        integer   Palavra reservada         3
-          begin   Palavra reservada         4
-              x       Identificador         5
-             :=    simbolo_composto         5
-             10      Numero inteiro         5
-              5      Numero inteiro         5
-              ;             simbolo         5
-              z       Identificador         6
-             :=    simbolo_composto         6
-              ;             simbolo         6
-          write   Palavra reservada         7
-              (             simbolo         7
-              x       Identificador         7
-              ,             simbolo         7
-              y       Identificador         7
-            end   Palavra reservada         8
-
-Erros Sintaticos:
-Erro sintatico linha 2: Esperava lexema ';', achou 'var'
+Lexema              Tipo                     Linha     
+-------------------------------------------------------
+Progran             Identificador            1         
+TesteComErros       Identificador            1         
+;                   simbolo                  1         
+var                 Palavra reservada        2         
+valor1              Identificador            3         
+,                   simbolo                  3         
+valor2              Identificador            3         
+:                   simbolo                  3         
+integer             Palavra reservada        3         
+;                   simbolo                  3         
+taxa                Identificador            4         
+:                   simbolo                  4         
+double              Palavra reservada        4         
+;                   simbolo                  4         
+media               Identificador            5         
+integer             Palavra reservada        5         
+;                   simbolo                  5         
+begin               Palavra reservada        7         
+valor1              Identificador            8         
+:=                  simbolo_composto         8         
+100                 Numero inteiro           8         
+valor2              Identificador            10        
+:=                  simbolo_composto         10        
+valor1              Identificador            10        
+/                   simbolo                  10        
+;                   simbolo                  10        
+if                  Palavra reservada        12        
+valor1              Identificador            12        
+>                   simbolo                  12        
+50                  Numero inteiro           12        
+write               Palavra reservada        13        
+(                   simbolo                  13        
+valor1              Identificador            13        
+)                   simbolo                  13        
+;                   simbolo                  13        
+media               Identificador            15        
+=                   simbolo                  15        
+(                   simbolo                  15        
+valor1              Identificador            15        
++                   simbolo                  15        
+valor2              Identificador            15        
+)                   simbolo                  15        
+/                   simbolo                  15        
+2                   Numero inteiro           15        
+;                   simbolo                  15        

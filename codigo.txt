@@ -1,8 +1,20 @@
-Program Exemplo
-var 2x: integer;
-var y integer
+Progran TesteComErros;
+var
+    valor1, valor2: integer;
+    taxa$: double; 
+    media integer;  
+
 begin
-   x := 10 @ 5;
-   z := ;
-   write(x, y
-end
+    valor1 := 100
+
+    valor2 := valor1 / 2.5.5; 
+
+    if valor1 > 50  
+        write(valor1);
+
+    media = (valor1 + valor2) / 2; 
+
+    (* 
+    
+end. 
+
