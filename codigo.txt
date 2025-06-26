@@ -9,7 +9,7 @@ begin
 
     valor2 := valor1 / 2.5.5; 
 
-    if valor1 > 50  
+    if valor1 > 50     (* falta um then aqui *)
         write(valor1);
 
     media = (valor1 + valor2) / 2; 

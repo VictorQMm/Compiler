@@ -11,6 +11,7 @@ valor2              Identificador            3
 integer             Palavra reservada        3         
 ;                   simbolo                  3         
 taxa                Identificador            4         
+$                   erro_lexico              4         
 :                   simbolo                  4         
 double              Palavra reservada        4         
 ;                   simbolo                  4         
@@ -20,16 +21,15 @@ integer             Palavra reservada        5
 begin               Palavra reservada        7         
 valor1              Identificador            8         
 :=                  simbolo_composto         8         
-100                 Numero inteiro           8         
 valor2              Identificador            10        
 :=                  simbolo_composto         10        
 valor1              Identificador            10        
 /                   simbolo                  10        
+2.5.5               erro_lexico              10        
 ;                   simbolo                  10        
 if                  Palavra reservada        12        
 valor1              Identificador            12        
 >                   simbolo                  12        
-50                  Numero inteiro           12        
 write               Palavra reservada        13        
 (                   simbolo                  13        
 valor1              Identificador            13        
@@ -43,5 +43,4 @@ valor1              Identificador            15
 valor2              Identificador            15        
 )                   simbolo                  15        
 /                   simbolo                  15        
-2                   Numero inteiro           15        
 ;                   simbolo                  15        
