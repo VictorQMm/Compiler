@@ -1,46 +1,64 @@
 Lexema              Tipo                     Linha     
 -------------------------------------------------------
-Progran             Identificador            1         
-TesteComErros       Identificador            1         
+Program             Palavra reservada        1         
+TesteIntermediario  Identificador            1         
 ;                   simbolo                  1         
-var                 Palavra reservada        2         
-valor1              Identificador            3         
-,                   simbolo                  3         
-valor2              Identificador            3         
-:                   simbolo                  3         
-integer             Palavra reservada        3         
-;                   simbolo                  3         
-taxa                Identificador            4         
-$                   erro_lexico              4         
+var                 Palavra reservada        3         
+contador            Identificador            4         
 :                   simbolo                  4         
-double              Palavra reservada        4         
-;                   simbolo                  4         
-media               Identificador            5         
+integer             Palavra reservada        4         
+,                   simbolo                  4         
+limite              Identificador            5         
+:                   simbolo                  5         
 integer             Palavra reservada        5         
 ;                   simbolo                  5         
-begin               Palavra reservada        7         
-valor1              Identificador            8         
-:=                  simbolo_composto         8         
-valor2              Identificador            10        
+ativo               Identificador            6         
+:                   simbolo                  6         
+boolean             Palavra reservada        6         
+;                   simbolo                  6         
+begin               Palavra reservada        8         
+limite              Identificador            9         
+:=                  simbolo_composto         9         
+;                   simbolo                  9         
+contador            Identificador            10        
 :=                  simbolo_composto         10        
-valor1              Identificador            10        
-/                   simbolo                  10        
-2.5.5               erro_lexico              10        
 ;                   simbolo                  10        
-if                  Palavra reservada        12        
-valor1              Identificador            12        
->                   simbolo                  12        
-write               Palavra reservada        13        
-(                   simbolo                  13        
-valor1              Identificador            13        
-)                   simbolo                  13        
-;                   simbolo                  13        
-media               Identificador            15        
-=                   simbolo                  15        
-(                   simbolo                  15        
-valor1              Identificador            15        
-+                   simbolo                  15        
-valor2              Identificador            15        
-)                   simbolo                  15        
-/                   simbolo                  15        
-;                   simbolo                  15        
+if                  Palavra reservada        13        
+contador            Identificador            13        
+>                   simbolo                  13        
+limite              Identificador            13        
+ativo               Identificador            14        
+:=                  simbolo_composto         14        
+false               Palavra reservada        14        
+else                Palavra reservada        15        
+ativo               Identificador            16        
+:=                  simbolo_composto         16        
+true                Palavra reservada        16        
+;                   simbolo                  16        
+status              Identificador            19        
+:=                  simbolo_composto         19        
+"verificado"        String literal           19        
+;                   simbolo                  19        
+write               Palavra reservada        21        
+(                   simbolo                  21        
+"Contador: "        String literal           21        
+,                   simbolo                  21        
+contador            Identificador            21        
+)                   simbolo                  21        
+write               Palavra reservada        22        
+(                   simbolo                  22        
+"Ativo: "           String literal           22        
+,                   simbolo                  22        
+ativo               Identificador            22        
+)                   simbolo                  22        
+;                   simbolo                  22        
+if                  Palavra reservada        25        
+limite              Identificador            25        
+then                Palavra reservada        25        
+write               Palavra reservada        26        
+(                   simbolo                  26        
+"O limite foi considerado verdadeiro."String literal           26        
+)                   simbolo                  26        
+;                   simbolo                  26        
+end                 Palavra reservada        28        
+.                   simbolo                  28        

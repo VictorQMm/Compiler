@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream> // pegar varios tipos em uma unica string
 #include <unordered_set>
+#include <unordered_map>
 
 using namespace std;
 
@@ -70,7 +71,7 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) { //
     regex separador(R"((<=|>=|:=|<>|\+\+|--|\".*?\"|[a-zA-Z_][a-zA-Z0-9_]*|\d*\.\d+\.\d*|\d+\.\d+|[+*/=<>;:.,()\[\]{}^$])|\s+)");
     regex coment1(R"(\{.*?\}|\(\*.*?\*\))");
 
-    while (getline(arq, linha)) { // linha por linha
+    while (getline(arq, linha)) {
         numLinha++;
 
         if (comentAberto) {
@@ -93,12 +94,12 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) { //
             }
         }
 
-        size_t poscoment2 = linhaSemComentarios.find("(*");
-        if (poscoment2 != string::npos) {
-            if (linhaSemComentarios.find("*)", poscoment2 + 2) == string::npos) {
+        size_t poscomment2 = linhaSemComentarios.find("(*");
+        if (poscomment2 != string::npos) {
+            if (linhaSemComentarios.find("*)", poscomment2 + 2) == string::npos) {
                 erros.push_back("Erro lexico linha " + to_string(numLinha) + ": Comentario '(*' nao fechado\n");
                 comentAberto = true;
-                linhaSemComentarios = linhaSemComentarios.substr(0, poscoment2);
+                linhaSemComentarios = linhaSemComentarios.substr(0, poscomment2);
             }
         }
 
@@ -107,7 +108,7 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) { //
 
         for (; it != end; ++it) {
             string lex = it->str();
-            if (lex.empty() || all_of(lex.begin(), lex.end(), ::isspace)) continue; //espc branco
+            if (lex.empty() || all_of(lex.begin(), lex.end(), ::isspace)) continue;
             
             string t = tipoLex(lex);
 
@@ -117,10 +118,9 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) { //
                 else if (lex.length() == 1 && !isalnum(lex[0])) msg += "Caractere '" + lex + "' nao identificado\n";
                 else msg += "Sequencia '" + lex + "' nao identificada\n";
                 erros.push_back(msg);
-                // CORREÇÃO 1: Adiciona o token inválido à tabela com um tipo de erro.
                 tabela.push_back({lex, "erro_lexico", numLinha}); 
             } else {
-                tabela.push_back({lex, t, numLinha}); //add na tabela
+                tabela.push_back({lex, t, numLinha});
             }
         }
     }
@@ -136,8 +136,10 @@ pair<vector<Simbolo>, vector<string>> analisarLexico(const string& arquivo) { //
 
 class Sintatico {
     const vector<Simbolo>& tokens;
-    vector<string> erros;
+    vector<string> errosSintaticos;
+    vector<string> errosSemanticos;
     size_t posToken;
+    unordered_map<string, string> tabelaSimbolos;
 
     Simbolo atual() {
         if (posToken < tokens.size()) return tokens[posToken];
@@ -164,9 +166,9 @@ class Sintatico {
         }
     }
 
-    bool casa(const string& esperado, bool isLexema = true) { //esperado -> lex or tipo
+    bool casa(const string& esperado, bool isLexema = true) {
         if (atual().tipo == "EOF") {
-            erros.push_back("Erro sintatico linha " + std::to_string(tokens.empty() ? 1 : tokens.back().linha + 1) + ": Fim de arquivo inesperado. Esperava '" + esperado + "'.\n");
+            errosSintaticos.push_back("Erro sintatico linha " + to_string(tokens.empty() ? 1 : tokens.back().linha + 1) + ": Fim de arquivo inesperado. Esperava '" + esperado + "'.\n");
             return false;
         }
         string valorAtual = isLexema ? atual().lexema : atual().tipo;
@@ -177,8 +179,135 @@ class Sintatico {
             string tipoEsperadoStr = isLexema ? "lexema" : "tipo";
             string msg = "Erro sintatico linha " + to_string(atual().linha) + ": ";
             msg += "Esperava " + tipoEsperadoStr + " '" + esperado + "', mas encontrou '" + atual().lexema + "'.\n";
-            erros.push_back(msg);
+            errosSintaticos.push_back(msg);
             return false;
+        }
+    }
+
+    bool estaDeclarada(const string& id, int linha) {
+        if (tabelaSimbolos.find(id) == tabelaSimbolos.end()) {
+            errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Variavel '" + id + "' nao declarada.\n");
+            return false;
+        }
+        return true;
+    }
+
+    void declararVariavel(const string& id, const string& tipo, int linha) {
+        if (tabelaSimbolos.find(id) != tabelaSimbolos.end()) {
+            errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Redeclaracao da variavel '" + id + "'.\n");
+        } else {
+            tabelaSimbolos[id] = tipo;
+        }
+    }
+
+    string tipoExpressao() {
+        size_t posInicial = posToken;
+        string tipo = tipoExpressaoSimples();
+        while (atual().lexema == "=" || atual().lexema == "<>" || atual().lexema == "<" ||
+               atual().lexema == ">" || atual().lexema == "<=" || atual().lexema == ">=") {
+            string op = atual().lexema;
+            int linha = atual().linha;
+            avanca();
+            string tipo2 = tipoExpressaoSimples();
+            if (tipo != tipo2) {
+
+                errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Tipos incompativeis na operacao relacional '" + op + "' (" + tipo + " e " + tipo2 + ").\n");
+            }
+            tipo = "boolean";
+        }
+        posToken = posInicial;
+        return tipo;
+    }
+
+    string tipoExpressaoSimples() {
+        string tipo = tipoTermo();
+        while (atual().lexema == "+" || atual().lexema == "-" || atual().lexema == "or") {
+            string op = atual().lexema;
+            int linha = atual().linha;
+            avanca();
+            string tipo2 = tipoTermo();
+            if (op == "or") {
+                if (tipo != "boolean" || tipo2 != "boolean") {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Operador 'or' requer operandos booleanos, encontrou " + tipo + " e " + tipo2 + ".\n");
+                }
+                tipo = "boolean";
+            } else {
+                if ((tipo == "integer" && tipo2 == "integer") || (tipo == "double" && tipo2 == "double") ||
+                    (tipo == "integer" && tipo2 == "double") || (tipo == "double" && tipo2 == "integer")) {
+                    tipo = (tipo == "double" || tipo2 == "double") ? "double" : "integer";
+                } else {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Tipos incompativeis na operacao '" + op + "' (" + tipo + " e " + tipo2 + ").\n");
+                }
+            }
+        }
+        return tipo;
+    }
+
+    string tipoTermo() {
+        string tipo = tipoFator();
+        while (atual().lexema == "*" || atual().lexema == "/" || atual().lexema == "and" ||
+               atual().lexema == "div" || atual().lexema == "mod") {
+            string op = atual().lexema;
+            int linha = atual().linha;
+            avanca();
+            string tipo2 = tipoFator();
+            if (op == "and") {
+                if (tipo != "boolean" || tipo2 != "boolean") {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Operador 'and' requer operandos booleanos, encontrou " + tipo + " e " + tipo2 + ".\n");
+                }
+                tipo = "boolean";
+            } else if (op == "div" || op == "mod") {
+                if (tipo != "integer" || tipo2 != "integer") {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Operador '" + op + "' requer operandos inteiros, encontrou " + tipo + " e " + tipo2 + ".\n");
+                }
+                tipo = "integer";
+            } else {
+                if ((tipo == "integer" && tipo2 == "integer") || (tipo == "double" && tipo2 == "double") ||
+                    (tipo == "integer" && tipo2 == "double") || (tipo == "double" && tipo2 == "integer")) {
+                    tipo = (tipo == "double" || tipo2 == "double") ? "double" : "integer";
+                } else {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Tipos incompativeis na operacao '" + op + "' (" + tipo + " e " + tipo2 + ").\n");
+                }
+            }
+        }
+        return tipo;
+    }
+
+    string tipoFator() {
+        string t = atual().tipo;
+        string lex = atual().lexema;
+        int linha = atual().linha;
+
+        if (t == "Identificador") {
+            if (estaDeclarada(lex, linha)) {
+                return tabelaSimbolos[lex];
+            }
+            return "desconhecido";
+        } else if (t == "Numero inteiro") {
+            return "integer";
+        } else if (t == "Numero real") {
+            return "double";
+        } else if (t == "String literal") {
+            return "string";
+        } else if (lex == "true" || lex == "false") {
+            return "boolean";
+        } else if (lex == "(") {
+            avanca();
+            string tipo = tipoExpressao();
+            casa(")");
+            return tipo;
+        } else if (lex == "not") {
+            avanca();
+            string tipo = tipoFator();
+            if (tipo != "boolean") {
+                errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Operador 'not' requer operando booleano, encontrou " + tipo + ".\n");
+            }
+            return "boolean";
+        } else if (t == "erro_lexico") {
+            return "desconhecido";
+        } else {
+            errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Token inesperado '" + lex + "' na expressao.\n");
+            return "desconhecido";
         }
     }
 
@@ -195,7 +324,7 @@ class Sintatico {
         bloco();
         casa(".");
         if (atual().tipo != "EOF") {
-            erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Tokens adicionais depois do fim do programa.\n");
+            errosSintaticos.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Tokens adicionais depois do fim do programa.\n");
         }
     }
 
@@ -214,29 +343,37 @@ class Sintatico {
         casa("var");
         while (atual().lexema != "begin" && atual().tipo != "EOF") {
             if (atual().tipo != "Identificador") {
-                erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Esperava um identificador para iniciar a declaracao.\n");
+
+                errosSintaticos.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Esperava um identificador para iniciar a declaracao.\n");
                 sincroniza();
                 if (atual().lexema == "begin" || atual().tipo == "EOF") break;
                 continue;
             }
-            listaIds();
+            vector<string> ids;
+            listaIds(ids);
             if (!casa(":")) {
                 if (atual().lexema == "integer" || atual().lexema == "boolean" || atual().lexema == "double") {
-                    erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Falta ':' antes do tipo '" + atual().lexema + "'.\n");
+    
+                    errosSintaticos.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Falta ':' antes do tipo '" + atual().lexema + "'.\n");
                 } else {
                     sincroniza();
                     if (atual().lexema == "begin" || atual().tipo == "EOF") break;
                     continue;
                 }
             }
-            if (!tipo()) {
+            string tipo;
+            if (!this->tipo(tipo)) {
                 sincroniza();
                 if (atual().lexema == "begin" || atual().tipo == "EOF") break;
                 continue;
             }
+            for (const auto& id : ids) {
+                declararVariavel(id, tipo, tokens[posToken > 0 ? posToken - 1 : 0].linha);
+            }
             if (!casa(";")) {
                 if (atual().lexema == "begin" || atual().tipo == "Identificador") {
-                    erros.push_back("Erro sintatico linha " + to_string(tokens[posToken > 0 ? posToken - 1 : 0].linha) + ": Falta ';' no final da declaracao.\n");
+    
+                    errosSintaticos.push_back("Erro sintatico linha " + to_string(tokens[posToken > 0 ? posToken - 1 : 0].linha) + ": Falta ';' no final da declaracao.\n");
                 } else {
                     sincroniza();
                 }
@@ -244,21 +381,24 @@ class Sintatico {
         }
     }
 
-    void listaIds() {
+    void listaIds(vector<string>& ids) {
+        ids.push_back(atual().lexema);
         casa("Identificador", false);
         while (atual().lexema == ",") {
             avanca();
+            ids.push_back(atual().lexema);
             casa("Identificador", false);
         }
     }
 
-    bool tipo() {
+    bool tipo(string& tipoRet) {
         string lex = atual().lexema;
         if (lex == "integer" || lex == "boolean" || lex == "double") {
+            tipoRet = lex;
             avanca();
             return true;
         }
-        erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Esperava um tipo (integer, double, boolean), mas encontrou '" + lex + "'.\n");
+        errosSintaticos.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Esperava um tipo (integer, double, boolean), mas encontrou '" + lex + "'.\n");
         return false;
     }
 
@@ -271,7 +411,8 @@ class Sintatico {
             }
             if (atual().lexema != ";") {
                 if (atual().lexema != "end" && atual().tipo != "EOF") {
-                    erros.push_back("Erro sintatico linha " + to_string(linhaAnterior) + ": Falta ';' no final da instrucao.\n");
+    
+                    errosSintaticos.push_back("Erro sintatico linha " + to_string(linhaAnterior) + ": Falta ';' no final da instrucao.\n");
                     sincroniza();
                 }
             } else {
@@ -291,20 +432,35 @@ class Sintatico {
         else if (lex == "while") enquanto();
         else if (lex == "begin") blocoInicioFim();
         else {
-            erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Comando invalido ou inesperado '" + lex + "'.\n");
+            errosSintaticos.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Comando invalido ou inesperado '" + lex + "'.\n");
             sincroniza();
         }
     }
 
     void atribuicao() {
+        string id = atual().lexema;
+        int linha = atual().linha;
+        string tipoId = (tabelaSimbolos.find(id) != tabelaSimbolos.end()) ? tabelaSimbolos[id] : "desconhecido";
         casa("Identificador", false);
+        if (!estaDeclarada(id, linha)) {
+        }
         if (atual().lexema == ":=") {
             avanca();
+            string tipoExp = tipoExpressao();
             expressao();
+            if (tipoId != "desconhecido" && tipoExp != "desconhecido") {
+                if (tipoId == "integer" && tipoExp != "integer") {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Atribuicao de tipo '" + tipoExp + "' para variavel '" + id + "' do tipo integer.\n");
+                } else if (tipoId == "double" && tipoExp != "integer" && tipoExp != "double") {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Atribuicao de tipo '" + tipoExp + "' para variavel '" + id + "' do tipo double.\n");
+                } else if (tipoId == "boolean" && tipoExp != "boolean") {
+                    errosSemanticos.push_back("Erro semantico linha " + to_string(linha) + ": Atribuicao de tipo '" + tipoExp + "' para variavel '" + id + "' do tipo boolean.\n");
+                }
+            }
         } else if (atual().lexema == "=") {
             int linhaDoErro = atual().linha; 
             avanca();
-            erros.push_back("Erro sintatico linha " + to_string(linhaDoErro) + ": Operador de atribuicao invalido '='. Use ':='.\n");
+            errosSintaticos.push_back("Erro sintatico linha " + to_string(linhaDoErro) + ": Operador de atribuicao invalido '='. Use ':='.\n");
             expressao();
         } else {
             sincroniza();
@@ -314,7 +470,11 @@ class Sintatico {
     void leitura() {
         casa("read");
         casa("(");
-        listaIds();
+        vector<string> ids;
+        listaIds(ids);
+        for (const auto& id : ids) {
+            estaDeclarada(id, tokens[posToken > 0 ? posToken - 1 : 0].linha);
+        }
         casa(")");
     }
 
@@ -325,11 +485,14 @@ class Sintatico {
         casa(")");
     }
 
-    void se() { // if -> expr(then) -> comand(else)
+    void se() {
         casa("if");
+        string tipoExp = tipoExpressao();
         expressao();
+        if (tipoExp != "boolean" && tipoExp != "desconhecido") {
+            errosSemanticos.push_back("Erro semantico linha " + to_string(atual().linha) + ": Expressao do 'if' deve ser booleana, encontrou " + tipoExp + ".\n");
+        }
         if (!casa("then")) {
-           // Nao sincroniza, apenas reporta o erro e tenta continuar
         }
         comando();
         if (atual().lexema == "else") {
@@ -340,8 +503,12 @@ class Sintatico {
 
     void enquanto() {
         casa("while");
+        string tipoExp = tipoExpressao();
         expressao();
-        if(!casa("do")){
+        if (tipoExp != "boolean" && tipoExp != "desconhecido") {
+            errosSemanticos.push_back("Erro semantico linha " + to_string(atual().linha) + ": Expressao do 'while' deve ser booleana, encontrou " + tipoExp + ".\n");
+        }
+        if (!casa("do")) {
             sincroniza();
         } else {
             comando();
@@ -391,8 +558,12 @@ class Sintatico {
     void fator() {
         string t = atual().tipo;
         string lex = atual().lexema;
+        int linha = atual().linha;
 
-        if (t == "Identificador" || t == "Numero inteiro" || t == "Numero real" || t == "String literal") {
+        if (t == "Identificador") {
+            estaDeclarada(lex, linha);
+            avanca();
+        } else if (t == "Numero inteiro" || t == "Numero real" || t == "String literal") {
             avanca();
         } else if (lex == "true" || lex == "false") {
             avanca();
@@ -403,11 +574,10 @@ class Sintatico {
         } else if (lex == "not") {
             avanca();
             fator();
-        // CORREÇÃO 2: Reconhece um token de erro léxico e o consome para evitar mais erros.
         } else if (t == "erro_lexico") {
             avanca();
         } else {
-            erros.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Token inesperado '" + lex + "' na expressao.\n");
+            errosSintaticos.push_back("Erro sintatico linha " + to_string(atual().linha) + ": Token inesperado '" + lex + "' na expressao.\n");
             sincroniza();
         }
     }
@@ -417,20 +587,21 @@ public:
 
     void analisar() {
         if (tokens.empty()) {
-            erros.push_back("Erro sintatico: Nao ha tokens para analisar.\n");
+            errosSintaticos.push_back("Erro sintatico: Nao ha tokens para analisar.\n");
             return;
         }
         prog();
     }
 
-    vector<string> getErros() {
-        return erros;
+    vector<string> getErrosSintaticos() {
+        return errosSintaticos;
+    }
+    vector<string> getErrosSemanticos() {
+        return errosSemanticos;
     }
 };
 
-
 int main() {
-    
     string arquivo = "codigo.txt";
     string saida = "tabela.txt";
 
@@ -462,17 +633,25 @@ int main() {
         return 1;
     }
 
-    cout << "\n- Iniciando Analise Sintatica -\n";
+    cout << "\n- Iniciando Analise Sintatica e Semantica -\n";
     Sintatico sint(tabela);
     sint.analisar();
 
-    vector<string> errosSint = sint.getErros();
+    vector<string> errosSint = sint.getErrosSintaticos();
+    vector<string> errosSem = sint.getErrosSemanticos();
 
     if (!errosSint.empty()) {
         cout << "\n- Erros Sintaticos Encontrados -\n";
         for (const auto& e : errosSint) cout << e;
-    } else if (errosLex.empty()) {
-        cout << "Analise sintatica concluida sem erros.\n";
+    }
+
+    if (!errosSem.empty()) {
+        cout << "\n- Erros Semanticos Encontrados -\n";
+        for (const auto& e : errosSem) cout << e;
+    }
+
+    if (errosLex.empty() && errosSint.empty() && errosSem.empty()) {
+        cout << "\nAnalises lexica, sintatica e semantica concluidas sem erros.\n";
     }
 
     return 0;

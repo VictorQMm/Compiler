@@ -1,20 +1,28 @@
-Progran TesteComErros;
+Program TesteIntermediario;
+
 var
-    valor1, valor2: integer;
-    taxa$: double; 
-    media integer;  
+  contador : integer, (* Erro Sintático: Vírgula no final da declaração em vez de ponto e vírgula *)
+  limite : integer;
+  ativo : boolean;
 
 begin
-    valor1 := 100
+  limite := 100;
+  contador := 99;
 
-    valor2 := valor1 / 2.5.5; 
+  (* Erro Sintático: 'if' sem a palavra-chave 'then' *)
+  if contador > limite
+    ativo := false
+  else
+    ativo := true;
 
-    if valor1 > 50     (* falta um then aqui *)
-        write(valor1);
-
-    media = (valor1 + valor2) / 2; 
-
-    (* 
-    
-end. 
-
+  (* Erro Semântico: A variável 'status' não foi declarada *)
+  status := "verificado";
+  
+  write("Contador: ", contador) (* Erro Sintático: Falta de ponto e vírgula para separar os comandos 'write' *)
+  write("Ativo: ", ativo);
+  
+  (* Erro Semântico: A condição do 'if' deve ser booleana, mas 'limite' é um inteiro *)
+  if limite then
+     write("O limite foi considerado verdadeiro.");
+  
+end.
